@@ -1,4 +1,5 @@
 from typing import AsyncGenerator
+from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -11,10 +12,18 @@ settings = get_settings()
 # Neon configuration: ai-foundry-products project, ai_consultancy schema
 DB_SCHEMA = "ai_consultancy"
 
-# Convert PostgreSQL URL to async version
+# Parse database URL and handle sslmode for asyncpg
+parsed = urlparse(settings.database_url)
+query_params = parse_qs(parsed.query)
+ssl_mode = query_params.get('sslmode', ['require'])[0]
+
+# Build clean URL without sslmode for asyncpg
 DATABASE_URL = settings.database_url.replace(
     "postgresql://", "postgresql+asyncpg://"
-)
+).split('?')[0]
+
+# SSL configuration for asyncpg
+ssl_config = ssl_mode if ssl_mode != 'disable' else False
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -25,7 +34,8 @@ engine = create_async_engine(
     connect_args={
         "server_settings": {
             "search_path": DB_SCHEMA
-        }
+        },
+        "ssl": ssl_config,
     },
 )
 

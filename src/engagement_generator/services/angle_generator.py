@@ -5,6 +5,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from groq import Groq
+from pydantic import BaseModel
 
 from src.core.config import get_settings
 from src.opportunity_engine.models.opportunity import Opportunity
